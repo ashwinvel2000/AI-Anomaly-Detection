@@ -15,3 +15,10 @@
   - Learned there are better alternatives
       - Tailwind CSS for Bootstrap
       - Vanilla JS for JQuery
+        
+18th June 2025
+1. New branch for explore-streams
+2. Create .NET model (SteamSumary.cs) - Stores the data that will be captured
+3. Added DataHubExtensions folder
+
+19th June 2025
