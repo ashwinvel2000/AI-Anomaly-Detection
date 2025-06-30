@@ -22,3 +22,7 @@
 3. Added DataHubExtensions folder
 
 19th June 2025
+1. Table generated on the webapp
+2. Created 'Export to CSV' button
+3. Noticed timerange of the data - there are 5 tools in total
+4. 
