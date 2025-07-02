@@ -25,4 +25,9 @@
 1. Table generated on the webapp
 2. Created 'Export to CSV' button
 3. Noticed timerange of the data - there are 5 tools in total
-4. 
+
+2nd July 2025
+1. Created Jupyter to explore the sampled data
+2. Put filters to choose the best parameter to train models on
+  - Dont stop, pop they cat
+       - Just like that
