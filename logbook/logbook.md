@@ -34,7 +34,10 @@
 
 12th August 2025
 1. Performance optimization to reduce model inference session
-2. Update PDF design to match TAQA brand colors
+   - Model inference: Increased batch sizes from 1024 to 2048 for better CPU utilization
+   - DQ script is alsso batched (100 rows at a time)
+   - Added parallel processing when dealing with >10k anomalies
+3. Update PDF design to match TAQA brand colors
    - Changed from using DinkPdf to QuestPDf as it can export the charts directly from the dashboard
-3. Create logic based Recommendation section
+4. Create logic based Recommendation section
    - Future improvment -> use fine tuned model to automatically provide recommendations
