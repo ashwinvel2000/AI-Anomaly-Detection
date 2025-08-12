@@ -29,5 +29,12 @@
 2nd July 2025
 1. Created Jupyter to explore the sampled data
 2. Put filters to choose the best parameter to train models on
-  - Dont stop, pop they cat
-       - Just like that
+3. Changed the model from being called locally to being called using API (used FastAPI)
+  - So taht the model can be retrained seamlessly with new data. Cant do retraining natively in C#
+
+12th August 2025
+1. Performance optimization to reduce model inference session
+2. Update PDF design to match TAQA brand colors
+   - Changed from using DinkPdf to QuestPDf as it can export the charts directly from the dashboard
+3. Create logic based Recommendation section
+   - Future improvment -> use fine tuned model to automatically provide recommendations
