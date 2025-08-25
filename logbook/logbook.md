@@ -41,3 +41,8 @@
    - Changed from using DinkPdf to QuestPDf as it can export the charts directly from the dashboard
 4. Create logic based Recommendation section
    - Future improvment -> use fine tuned model to automatically provide recommendations
+
+17th August 2025
+1. Run LSTM autoencoder on same dataset
+2. Applied same scaling but feature engineered 10 other features (ratios and difference)
+3. Training time was too long - running on 100k max took 3 hours
