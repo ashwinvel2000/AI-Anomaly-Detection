@@ -23,16 +23,16 @@ taqa.polaris.sit/
 │ └── AnomalyEvent.cs # Anomaly data structure
 ├── Scripts/
 │ └── DataHub.cs # DataHub integration services
-├── Views/
-│ ├── Anomaly/
-│ │ ├── Upload.cshtml # File upload interface
-│ │ └── Detect.cshtml # Results dashboard
-│ ├── DataExploration/
-│ │ └── Index.cshtml # Stream exploration UI
-│ ├── Home/
-│ │ └── DataHub.cshtml # DataHub management UI
-│ └── ReportLanding/
-│ └── Index.cshtml # Report generation form
+└── Views/
+├── Anomaly/
+│ ├── Upload.cshtml # File upload interface
+│ └── Detect.cshtml # Results dashboard
+├── DataExploration/
+│ └── Index.cshtml # Stream exploration UI
+├── Home/
+│ └── DataHub.cshtml # DataHub management UI
+└── ReportLanding/
+└── Index.cshtml # Report generation form
 ```
 
 ### Active Components
@@ -97,16 +97,6 @@ The DataHub functionality is implemented through:
    - User inputs parameters in ReportLanding/Index.cshtml
    - System captures charts and data
    - Generates PDF using QuestPDF
-
-## Legacy Implementation (Being Deprecated)
-
-The following components from the local-inference implementation are being phased out:
-
-```
-Services/Anomaly/
-??? AnomalyRouter.cs     # Old: Local model inference
-??? AnomalyEvent.cs      # Still used for data structure
-```
 
 This older implementation used:
 - Local ONNX runtime
@@ -193,3 +183,4 @@ PDF reports include:
 
 
 The system is designed to handle both the current FastAPI service implementation while maintaining compatibility with any remaining legacy components during the transition.
+
