@@ -8,35 +8,31 @@ This document explains the core scripts needed for the anomaly detection pipelin
 
 ```
 taqa.polaris.sit/
-??? Controllers/
-?   ??? AnomalyController.cs           # Handles API requests
-?   ??? DataExplorationController.cs    # Handles stream exploration
-?   ??? ReportLandingController.cs      # Handles PDF generation
-??? Models/
-?   ??? MLServiceModels.cs             # API response models
-?   ??? AnomalyReportData.cs           # Report data structure
-?   ??? ReportInputModel.cs            # Report generation inputs
-??? Services/
-?   ??? MLServiceClient.cs             # FastAPI client
-?   ??? Anomaly/
-?       ??? AnomalyRouter.cs           # Legacy detection logic
-?       ??? AnomalyEvent.cs            # Anomaly data structure
-??? Scripts/
-?   ??? DataHub.cs                     # DataHub integration services
-??? Views/
-?   ??? Anomaly/
-?   ?   ??? Upload.cshtml              # File upload interface
-?   ?   ??? Detect.cshtml              # Results dashboard
-?   ??? DataExploration/
-?   ?   ??? Index.cshtml               # Stream exploration UI
-?   ??? Home/
-?   ?   ??? DataHub.cshtml             # DataHub management UI
-?   ??? ReportLanding/
-?       ??? Index.cshtml               # Report generation form
-??? wwwroot/
-    ??? js/
-        ??? Pages/
-            ??? DataHub.js             # DataHub client-side logic
+├── Controllers/
+│ ├── AnomalyController.cs # Handles API requests
+│ ├── DataExplorationController.cs # Handles stream exploration
+│ └── ReportLandingController.cs # Handles PDF generation
+├── Models/
+│ ├── MLServiceModels.cs # API response models
+│ ├── AnomalyReportData.cs # Report data structure
+│ └── ReportInputModel.cs # Report generation inputs
+├── Services/
+│ ├── MLServiceClient.cs # FastAPI client
+│ └── Anomaly/
+│ ├── AnomalyRouter.cs # Legacy detection logic
+│ └── AnomalyEvent.cs # Anomaly data structure
+├── Scripts/
+│ └── DataHub.cs # DataHub integration services
+├── Views/
+│ ├── Anomaly/
+│ │ ├── Upload.cshtml # File upload interface
+│ │ └── Detect.cshtml # Results dashboard
+│ ├── DataExploration/
+│ │ └── Index.cshtml # Stream exploration UI
+│ ├── Home/
+│ │ └── DataHub.cshtml # DataHub management UI
+│ └── ReportLanding/
+│ └── Index.cshtml # Report generation form
 ```
 
 ### Active Components
@@ -194,5 +190,6 @@ PDF reports include:
 - Statistics summary
 - Data quality metrics
 - Processing details
+
 
 The system is designed to handle both the current FastAPI service implementation while maintaining compatibility with any remaining legacy components during the transition.
