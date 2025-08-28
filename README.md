@@ -7,8 +7,8 @@
 ![SIT pipeline overview](TAQA_Model_Development/TAQA_pipeline.png)
 *Fig. A. Ingest (DataHub/CSV) → Preprocess → Ensemble → Thresholding → Dashboard/PDF.*
 
-This repo contains the code and artifacts for a physics-informed, **unsupervised** anomaly detection of **PulseEight Interval Control Valve (ICV)** System Integration Tests (SIT).  
-It ingests 1 Hz workshop telemetry, runs a small ensemble (Isolation Forests + XGB residuals), and produces **standardised PDF evidence** from a .NET web app.
+- This repo contains the code and artifacts for a physics-informed, **unsupervised** anomaly detection of **PulseEight Interval Control Valve (ICV)** System Integration Tests (SIT).  
+- It ingests 1 Hz workshop telemetry, runs a small ensemble (Isolation Forests + XGB residuals), and produces **standardised PDF evidence** from a .NET web app.
 
 ---
 
