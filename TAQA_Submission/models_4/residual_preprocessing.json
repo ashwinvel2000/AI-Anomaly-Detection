@@ -1,0 +1,45 @@
+{
+  "pressure": {
+    "method": "log1p",
+    "cols": [
+      "Upstream-Pressure",
+      "Downstream-Pressure",
+      "Downstream-Upstream-Difference"
+    ]
+  },
+  "temperature": {
+    "method": "robust",
+    "cols": [
+      "Upstream-Temperature",
+      "Downstream-Temperature"
+    ],
+    "center": {
+      "Upstream-Temperature": 15.90674,
+      "Downstream-Temperature": 15.82581
+    },
+    "scale": {
+      "Upstream-Temperature": 2.098419999999999,
+      "Downstream-Temperature": 2.1452399999999994
+    }
+  },
+  "choke": {
+    "method": "standard",
+    "cols": [
+      "Choke-Position"
+    ],
+    "center": {
+      "Choke-Position": 67.54808980394141
+    },
+    "scale": {
+      "Choke-Position": 47.117043809994364
+    }
+  },
+  "feature_order": [
+    "Upstream-Pressure",
+    "Downstream-Pressure",
+    "Downstream-Upstream-Difference",
+    "Upstream-Temperature",
+    "Downstream-Temperature",
+    "Choke-Position"
+  ]
+}

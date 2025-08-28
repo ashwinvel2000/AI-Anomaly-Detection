@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-08-18T15:01:40Z",
+  "files": {
+    "choke_position.onnx": "c97f2cf23b01",
+    "delta_temp_open.onnx": "8ae07dc02901",
+    "full_vectors_if.onnx": "7d671390bf87",
+    "pressure_pair_open.onnx": "f6a48457e413",
+    "residual_battery.onnx": "8bf08b2a4f43",
+    "residual_downP.onnx": "2757f76b235e",
+    "residual_downT.onnx": "e869c9a4ae24",
+    "residual_upP.onnx": "ac51611fb4bb",
+    "residual_upT.onnx": "abbbc7f3cee5",
+    "target_pos_residual.onnx": "313b5e78df7e",
+    "residual_mad.json": "428dfe7c2fb4"
+  }
+}
