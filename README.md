@@ -19,7 +19,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 -  **Batch/near-real-time:** not hard real-time; designed for SIT runs
 
 ## Repo layout
-.
+```
 	├─ TAQA_Deployment/        # .NET web app (controllers, services, dashboard)
 	├─ TAQA_Model_Development/ # EDA & training notebooks, model dev
 	├─ TAQA-InferenceAPI/      # FastAPI Python service for inference
@@ -29,7 +29,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 	├─ title/                  # Project title and metadata
 	├─ docs/                   # diagrams, figures, README images
 	└─ README.md
-
+```
 
 ## Quick start
 1) **Prereqs:** .NET 6.0, ONNX Runtime, (optional) Python 3.11 for training.  
