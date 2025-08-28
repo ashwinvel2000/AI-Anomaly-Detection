@@ -1,6 +1,6 @@
 # ML Service API
 
-A FastAPI web service for anomaly detection on time-series CSV data using pre-trained ONNX models. The service processes multi-sensor CSV files and runs inference on 9 different models including isolation forest and residual regression models.
+A FastAPI web service for anomaly detection on time-series CSV data using pre-trained ONNX models. The service processes multi-sensor CSV files and runs inference on 10 different models including isolation forest and residual regression models.
 
 ## Key Features
 
@@ -154,7 +154,7 @@ curl -X POST "http://localhost:8000/retrain/residual_battery" \
 
 The service automatically discovers available ONNX models in the models directory, so adding new models is as simple as placing the .onnx file in the models folder. The system handles feature mapping between CSV column names and ONNX model input features automatically.
 
-Model loading is lazy (on first request) for faster startup times. The startup process takes about 2-3 seconds instead of pre-loading all models.
+Model loading happens on first request for faster startup times. The startup process takes about 2-3 seconds instead of pre-loading all models.
 
 ## Common Issues
 
@@ -162,3 +162,4 @@ Model loading is lazy (on first request) for faster startup times. The startup p
 - Model not found errors: Ensure ONNX files exist in models directory
 - CSV format issues: Verify timestamp format and column headers match expected sensor names
 - Memory issues with large files: Process data in smaller batches
+
