@@ -43,7 +43,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 
 > Data are proprietary to TAQA; only figures are included here.
 
-## How it works (1-minute tour)
+## How it works
 ![Dashboard screenshot](TAQA_Deployment/dashboard.png)
 *Fig. B. Screenshot of the Dashboard*
 
@@ -51,7 +51,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 1) The app aligns and cleans 1 Hz streams (repeats/zeros/≈12000 filtered, log1p/robust scaling), computes ΔT/ΔP, and passes features to an ONNX ensemble.  
 2) Thresholds are set by a simple **Score-Exceedance Rate** budget. Point flags are grouped into **events** (with a short run-length rule) and written to the PDF.
 
-## Results (short, factual)
+## Results
 - Mean **F1 ≈ 0.93** on a labelled hold-out tool (n≈500 labels); **ΔT-IF F1 ≈ 0.993**.  
 - Runtime: **~120 events/s**, **~14 MB**; batch of ~6,998 rows in **58,385 ms** (~8–9 ms/row when batched).
 
