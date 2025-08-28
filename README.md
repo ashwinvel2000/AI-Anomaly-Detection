@@ -41,6 +41,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 
 ## How it works (1-minute tour)
 ![Dashboard screenshot](TAQA_Deployment/dashboard.png)
+*Fig. B. Screenshot of the Dashboard*
 The app aligns and cleans 1 Hz streams (repeats/zeros/≈12000 filtered, log1p/robust scaling), computes ΔT/ΔP, and passes features to an ONNX ensemble.  
 Thresholds are set by a simple **Score-Exceedance Rate** budget. Point flags are grouped into **events** (with a short run-length rule) and written to the PDF.
 
