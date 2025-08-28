@@ -112,15 +112,15 @@ The system is moving to the FastAPI service instead, which provides:
 ## Required Files
 
 ### CSV Files Needed
-1. Tool.P8-36.SIT.Battery-Voltage.csv
-2. Tool.P8-36.SIT.Choke-Position.csv
-3. Tool.P8-36.SIT.Downstream-Pressure.csv
-4. Tool.P8-36.SIT.Downstream-Temperature.csv
-5. Tool.P8-36.SIT.Downstream-Upstream-Difference.csv
-6. Tool.P8-36.SIT.Target-Position.csv
-7. Tool.P8-36.SIT.Tool-State.csv
-8. Tool.P8-36.SIT.Upstream-Pressure.csv
-9. Tool.P8-36.SIT.Upstream-Temperature.csv
+1. Tool.P8-XX.SIT.Battery-Voltage.csv
+2. Tool.P8-XX.SIT.Choke-Position.csv
+3. Tool.P8-XX.SIT.Downstream-Pressure.csv
+4. Tool.P8-XX.SIT.Downstream-Temperature.csv
+5. Tool.P8-XX.SIT.Downstream-Upstream-Difference.csv
+6. Tool.P8-XX.SIT.Target-Position.csv
+7. Tool.P8-XX.SIT.Tool-State.csv
+8. Tool.P8-XX.SIT.Upstream-Pressure.csv
+9. Tool.P8-XX.SIT.Upstream-Temperature.csv
 
 ## Machine Learning Models (Now on FastAPI Service)
 
@@ -183,4 +183,5 @@ PDF reports include:
 
 
 The system is designed to handle both the current FastAPI service implementation while maintaining compatibility with any remaining legacy components during the transition.
+
 
