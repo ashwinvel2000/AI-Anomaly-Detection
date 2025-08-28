@@ -1,6 +1,6 @@
-<div align="center">
-
-<img src="TAQA-InferenceAPI/logo.png" alt="drawing" width="200"/>
+<p align="center">
+  <img src="TAQA-InferenceAPI/logo.png" alt="drawing" width="200"/>
+</p>
 
 # PulseEight ICV — SIT Anomaly Triage (ONNX/.NET)
 
