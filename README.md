@@ -54,7 +54,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 - Mean **F1 ≈ 0.93** on a labelled hold-out tool (n≈500 labels); **ΔT-IF F1 ≈ 0.993**.  
 - Runtime: **~120 events/s**, **~14 MB**; batch of ~6,998 rows in **58,385 ms** (~8–9 ms/row when batched).
 
-![Dashboard screenshot](TAQA_Deployment/Isolation Forest.png)
+![Dashboard screenshot](assets/Isolation Forest.png)
 *Fig. B. Isolation Forest Decision Space*
 ## Model artifacts
 - `models/if_deltaT.onnx` — 1D ΔT Isolation Forest  
