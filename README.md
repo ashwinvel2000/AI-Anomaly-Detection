@@ -47,6 +47,7 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 
 ![Demo of the app](assets/AnomalyDetector-ToolTour.gif)
 
+*Fig. B. Dashboard UI Walkthrough.*
 1) The app aligns and cleans 1 Hz streams (repeats/zeros/≈12000 filtered, log1p/robust scaling), computes ΔT/ΔP, and passes features to an ONNX ensemble.  
 2) Thresholds are set by a simple **Score-Exceedance Rate** budget. Point flags are grouped into **events** (with a short run-length rule) and written to the PDF.
 
@@ -55,7 +56,8 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 - Runtime: **~120 events/s**, **~14 MB**; batch of ~6,998 rows in **58,385 ms** (~8–9 ms/row when batched).
 
 ![Dashboard screenshot](assets/IsolationForest.png)
-*Fig. B. Isolation Forest Decision Space*
+
+*Fig. C. Isolation Forest Decision Space.*
 ## Model artifacts
 - `models/if_deltaT.onnx` — 1D ΔT Isolation Forest  
 - `models/if_pressures.onnx` — 2D pressure-pair IF  
