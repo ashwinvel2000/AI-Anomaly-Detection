@@ -1,0 +1,81 @@
+﻿@model taqa.polaris.sit.Models.ReportInputModel
+
+@{
+    ViewData["Title"] = "Generate Report";
+}
+
+<div id="loader" class="loader hidden"></div>
+
+<div id="message-box" class="message-box">
+    <div id="message-content" class="message-content"></div>
+</div>
+
+<div class="container-fluid">
+    <div class="container-fluid mt-3 d-flex flex-column justify-content-center align-items-center">
+
+        <!-- Page Title -->
+        <div class="text-center mb-4">
+            <h1 class="lead display-4">Anomaly Detector</h1>
+        </div>
+
+        <!-- BEGIN form -->
+        <form asp-controller="ReportLanding"
+              asp-action="Index"
+              method="post"
+              class="d-flex flex-column align-items-center justify-content-center">
+
+            <!-- Tool ID -->
+            <div class="row-3 input-cont mb-4 border p-3 bg-light">
+                <div class="col-3 d-flex align-items-center justify-content-center">
+                    <label class="form-label fs-6">Tool ID</label>
+                </div>
+                <div class="input-container col-8 d-flex align-items-center justify-content-center">
+                    <input asp-for="ToolId"
+                           class="stream-id-input input-element"
+                           placeholder="P8-123" data-check="tool-id-check" />
+                    <div class="text-center hover-message"></div>
+                </div>
+                <div class="verify invalid col-1 text-center" id="tool-id-check">&#10060;</div>
+            </div>
+
+            <!-- Date range -->
+            <div class="row-3 input-cont mb-4 border p-3 bg-light">
+                <div class="col-3 d-flex align-items-center justify-content-center">
+                    <label class="form-label fs-6">Start / End Date</label>
+                </div>
+                <div class="input-container col-8 d-flex align-items-center justify-content-center gap-2">
+                    <input asp-for="StartDate" class="input-element" type="date" />
+                    <input asp-for="EndDate" class="input-element" type="date" />
+                </div>
+                <div class="verify invalid col-1"></div>
+            </div>
+
+            <!-- Namespace -->
+            <div class="row-3 input-cont mb-4 border p-3 bg-light">
+                <div class="col-3 d-flex align-items-center justify-content-center">
+                    <label class="form-label fs-6">Namespace</label>
+                </div>
+                <div class="input-container col-8 d-flex align-items-center justify-content-center">
+                    <select asp-for="Namespace" class="form-select input-element">
+                        <option value="">Choose namespace</option>
+                        <option value="dev">Development</option>
+                        <option value="ops">Operations</option>
+                    </select>
+                </div>
+                <div class="verify invalid col-1" id="namespace-check">&#10060;</div>
+            </div>
+
+            <!-- SUBMIT -->
+            <div class="row-3 container mt-4 mb-5 d-flex flex-column justify-content-center align-items-center">
+                <button type="submit" class="btn btn-primary form-submit-btn btn-lg">
+                    Generate Report
+                </button>
+            </div>
+        </form>
+        <!-- END form -->
+    </div>
+</div>
+
+@section Scripts {
+    <!-- later add validation or JS as needed -->
+}

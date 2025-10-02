@@ -1,0 +1,936 @@
+﻿@model IReadOnlyList<taqa.polaris.sit.Services.Anomaly.AnomalyEvent>
+
+@{
+    ViewData["Title"] = "Detected anomalies";
+    var total = Model.Count;
+}
+
+@section Styles {
+    <!-- DataTables CSS (CDN) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.10/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+}
+
+<div class="container-fluid">
+    <h2>@ViewData["Title"]</h2>
+
+    <p class="text-muted">
+        Total anomalies detected: <strong>@total</strong>
+    </p>
+
+    @if (ViewBag.Summary is IDictionary<string, int> sum && sum.Count > 0)
+    {
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header fw-bold">
+                Anomaly Counts
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var kv in sum.Where(kv => kv.Value > 0))
+                    {
+                        <div class="col-6 col-md-4">
+                            <span class="text-muted">@kv.Key</span>
+                            <span class="badge bg-danger ms-2">@kv.Value</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-success">No anomalies detected 🎉</div>
+    }
+    else
+    {
+        <!-- ─── Chart Loading Status ─────────────────────────────── -->
+        <div id="chartLoadingStatus" class="alert alert-info d-none">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                Initializing charts...
+            </div>
+        </div>
+        
+        <div id="chartErrorStatus" class="alert alert-warning d-none">
+            <strong>Warning:</strong> Some charts failed to load. Data is still available in the table below.
+        </div>
+
+        <!-- ─── Severity Mix Chart ─────────────────────────────── -->
+        <div class="card mb-4 shadow-sm" id="severityMixCard">
+            <div class="card-header fw-bold">
+                Severity Mix (top 8 detectors)
+                <div class="float-end">
+                    <span id="severityChartStatus" class="badge bg-secondary">Loading...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="severityChart" style="height: 400px; width: 100%;"></canvas>
+            </div>
+        </div>
+
+        <!-- ─── Quick-look chart ─────────────────────────────── -->
+        <div class="card mb-4 shadow-sm" id="anomalyTimelineCard">
+            <div class="card-header fw-bold">
+                Anomaly Timeline
+                <div class="float-end">
+                    <span id="timelineChartStatus" class="badge bg-secondary">Loading...</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="anomalyChart" style="height: calc(30vh + 120px); width: 100%;"></canvas>
+            </div>
+        </div>
+
+        <!-- ─── Sensor-health strip (tiles injected by JS) ───── -->
+        <div class="card mb-3 shadow-sm" id="sensorHealthCard">
+            <div class="card-header fw-bold">
+                Sensor Health
+            </div>
+            <div class="card-body p-2">
+                <div id="healthStrip" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- ─── ML Model Deployment Metrics Panel ─────────────────────────────── -->
+        @if (ViewBag.InferenceLatencyMs != null && ViewBag.Throughput != null && ViewBag.MemoryUsedMb != null && ViewBag.CpuUsedMs != null)
+        {
+            <div class="card mb-4 shadow-sm" id="metricsPanel">
+                <div class="card-header fw-bold">
+                    Model Deployment Metrics
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-2">
+                            <span class="text-muted">Inference Latency</span><br />
+                            <span class="fw-bold" style="font-size:1.3em">@((Convert.ToDouble(ViewBag.InferenceLatencyMs)).ToString("N0")) <span style="font-size:0.9em">ms</span></span>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <span class="text-muted">Throughput</span><br />
+                            <span class="fw-bold" style="font-size:1.3em">@((Convert.ToDouble(ViewBag.Throughput)).ToString("N1")) <span style="font-size:0.9em">events/sec</span></span>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <span class="text-muted">Memory Used</span><br />
+                            <span class="fw-bold" style="font-size:1.3em">@((Convert.ToDouble(ViewBag.MemoryUsedMb)).ToString("N1")) <span style="font-size:0.9em">MB</span></span>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <span class="text-muted">CPU Time</span><br />
+                            <span class="fw-bold" style="font-size:1.3em">@((Convert.ToDouble(ViewBag.CpuUsedMs)).ToString("N0")) <span style="font-size:0.9em">ms</span></span>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-2">Metrics are calculated for the most recent inference session.</p>
+                </div>
+            </div>
+        }
+
+        <!-- ─── Full Width Table with DataTables ─────────────────────────────── -->
+        <div class="mb-4" id="anomalyTableSection">
+            <h4 class="mb-3">Anomaly Details</h4>
+            <table id="anomalyTable" class="display w-100 table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Timestamp (UTC)</th>
+                        <th>Detector</th>
+                        <th>RawValue</th>
+                        <th>Score</th>
+                        <th>Threshold</th>
+                        <th>Severity</th>
+                        <th>Observed</th>
+                        <th>Predicted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var n = 0; }
+                    @foreach (var a in Model)
+                    {
+                        n++;
+                        <tr data-bs-toggle="modal"
+                            data-bs-target="#drillModal"
+                            data-det="@a.Detector" 
+                            class="@(a.Severity == "High" ? "table-danger" : a.Severity == "Medium" ? "table-warning" : "")">
+                            <td>@n</td>
+                            <td>@a.Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td>@System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(a.Detector.Replace('_', ' '))</td>
+                            <td>@($"{a.RawValue:F3}")</td>
+                            <td>@(double.IsNaN(a.Score) ? "" : $"{a.Score:F3}")</td>
+                            <td>@($"{a.Threshold:F3}")</td>
+                            <td>@a.Severity</td>
+                            <td>@(a.Observed?.ToString("F3") ?? "")</td>
+                            <td>@(a.Predicted?.ToString("F3") ?? "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ─── Generate Report Section ─────────────────────────────── -->
+        <div class="text-center mb-4">
+            <button type="button" id="generateReportBtn" class="btn btn-success btn-lg">
+                <i class="fas fa-file-pdf me-2"></i>
+                <span id="reportBtnText">Generate PDF Report</span>
+                <span id="reportBtnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </span>
+            </button>
+            <p class="text-muted mt-2 small">
+                <strong>PDF Report</strong>: Full report with charts and images
+            </p>
+        </div>
+    }
+
+    <!-- Drill-down modal -->
+    <div class="modal fade" id="drillModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="drillTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="drillChart" height="400"></canvas>
+                <p id="noDataMsg"
+                   class="text-muted text-center my-3 d-none">
+                    No anomaly predictions available for this detector.
+                </p>
+                </div>
+                <div class="modal-footer">
+                    <a id="csvLink" class="btn btn-sm btn-outline-secondary"
+                       href="#" download>Download CSV</a>
+                    <button class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a asp-action="Upload" class="btn btn-secondary mt-3">← Back to upload</a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- DataTables JS (CDN) -->
+    <script src="https://cdn.datatables.net/1.13.10/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script>
+        // Chart management state
+        let chartInitAttempts = 0;
+        const maxChartRetries = 3;
+        let chartsLoaded = { severity: false, timeline: false };
+        
+        // Initialize DataTables
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Starting initialization');
+            
+            // Show loading status
+            const loadingStatus = document.getElementById('chartLoadingStatus');
+            if (loadingStatus) {
+                loadingStatus.classList.remove('d-none');
+            }
+            
+            // Initialize DataTable with search and sorting
+            try {
+                $('#anomalyTable').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    pageLength: 50,
+                    lengthMenu: [[25, 50, 100, 200, -1], [25, 50, 100, 200, "All"]],
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'csv',
+                            text: 'Export CSV',
+                            filename: 'anomaly_data_' + new Date().toISOString().slice(0, 10),
+                            title: 'Anomaly Detection Results'
+                        }
+                    ],
+                    columnDefs: [
+                        { targets: [3, 4, 5, 7, 8], className: 'text-end' }, // Numeric columns
+                        { targets: 6, className: 'text-center' } // Severity column
+                    ],
+                    rowCallback: function(row, data) {
+                        // Preserve modal trigger attributes and row coloring
+                        var $row = $(row);
+                        var detector = $row.find('td:eq(2)').text();
+                        var severity = $row.find('td:eq(6)').text();
+                        
+                        $row.attr('data-bs-toggle', 'modal');
+                        $row.attr('data-bs-target', '#drillModal');
+                        $row.attr('data-det', detector.replace(/ /g, '_').toLowerCase());
+                        $row.css('cursor', 'pointer');
+                        
+                        // Apply severity-based row coloring
+                        if (severity === 'High') {
+                            $row.addClass('table-danger');
+                        } else if (severity === 'Medium') {
+                            $row.addClass('table-warning');
+                        }
+                    },
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+                console.log('DataTable initialized successfully');
+            } catch (error) {
+                console.error('Error initializing DataTable:', error);
+            }
+
+            // Initialize charts with error handling
+            initializeCharts();
+            
+            // Initialize health strip
+            initializeHealthStrip();
+
+            // Generate Report button click handlers
+            document.getElementById('generateReportBtn').addEventListener('click', function() {
+                generatePDFReport();
+            });
+        });
+        
+        function initializeCharts() {
+            console.log('Initializing charts...');
+            chartInitAttempts++;
+            
+            // Initialize severity chart
+            try {
+                initializeSeverityChart();
+            } catch (error) {
+                console.error('Error initializing severity chart:', error);
+                updateChartStatus('severity', 'error', 'Failed to load');
+            }
+            
+            // Initialize timeline chart
+            try {
+                initializeTimelineChart();
+            } catch (error) {
+                console.error('Error initializing timeline chart:', error);
+                updateChartStatus('timeline', 'error', 'Failed to load');
+            }
+            
+            // Check if we need to retry
+            setTimeout(() => {
+                if ((!chartsLoaded.severity || !chartsLoaded.timeline) && chartInitAttempts < maxChartRetries) {
+                    console.log(`Retrying chart initialization (attempt ${chartInitAttempts + 1}/${maxChartRetries})`);
+                    initializeCharts();
+                } else {
+                    // Final status update
+                    const loadingStatus = document.getElementById('chartLoadingStatus');
+                    const errorStatus = document.getElementById('chartErrorStatus');
+                    
+                    if (loadingStatus) {
+                        loadingStatus.classList.add('d-none');
+                    }
+                    
+                    if (!chartsLoaded.severity || !chartsLoaded.timeline) {
+                        if (errorStatus) {
+                            errorStatus.classList.remove('d-none');
+                        }
+                        console.warn('Some charts failed to load after all retry attempts');
+                    }
+                }
+            }, 1000);
+        }
+        
+        function updateChartStatus(chartType, status, message) {
+            const statusElement = document.getElementById(`${chartType}ChartStatus`);
+            if (statusElement) {
+                statusElement.className = `badge bg-${status === 'success' ? 'success' : status === 'error' ? 'danger' : 'secondary'}`;
+                statusElement.textContent = message;
+            }
+        }
+        
+        function initializeSeverityChart() {
+            const severityData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.SeverityMix ?? new { }));
+            
+            if (Object.keys(severityData).length > 0) {
+                const ctx = document.getElementById('severityChart');
+                
+                if (!ctx) {
+                    throw new Error('Severity chart canvas not found');
+                }
+                
+                const chartContext = ctx.getContext('2d');
+                if (!chartContext) {
+                    throw new Error('Could not get 2D context for severity chart');
+                }
+                
+                const detectors = Object.keys(severityData);
+                const lowData = detectors.map(d => severityData[d].Low || 0);
+                const mediumData = detectors.map(d => severityData[d].Medium || 0);
+                const highData = detectors.map(d => severityData[d].High || 0);
+                
+                // TAQA brand colors inspired by newsletter
+                const taqaTeal = '#00A6A6';
+                const taqaOrange = '#FF6B35';
+                const taqaNeutralGray = '#546E7A';
+                
+                new Chart(chartContext, {
+                    type: 'bar',
+                    data: {
+                        labels: detectors.map(d => d.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())),
+                        datasets: [
+                            {
+                                label: 'Low',
+                                data: lowData,
+                                backgroundColor: taqaTeal, // TAQA teal for low severity
+                                borderWidth: 0
+                            },
+                            {
+                                label: 'Medium',
+                                data: mediumData,
+                                backgroundColor: taqaNeutralGray, // Neutral gray for medium
+                                borderWidth: 0
+                            },
+                            {
+                                label: 'High',
+                                data: highData,
+                                backgroundColor: taqaOrange, // TAQA orange for high severity
+                                borderWidth: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        family: 'Arial',
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    color: taqaNeutralGray
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0, 166, 166, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: taqaTeal,
+                                borderWidth: 1
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 0,
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial'
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Anomalies',
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial',
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(84, 110, 122, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                chartsLoaded.severity = true;
+                updateChartStatus('severity', 'success', 'Loaded');
+                console.log('TAQA-branded severity chart initialized successfully');
+            } else {
+                chartsLoaded.severity = true;
+                updateChartStatus('severity', 'success', 'No data');
+                console.log('Severity chart: No data available');
+            }
+        }
+        
+        function initializeTimelineChart() {
+            const rows = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Chart ?? new { }));
+
+            if (rows.length) {
+                const ctx = document.getElementById('anomalyChart');
+                
+                if (!ctx) {
+                    throw new Error('Timeline chart canvas not found');
+                }
+                
+                const chartContext = ctx.getContext('2d');
+                if (!chartContext) {
+                    throw new Error('Could not get 2D context for timeline chart');
+                }
+                
+                // TAQA brand colors with better contrast
+                const taqaTeal = '#00A6A6';
+                const taqaOrange = '#FF6B35';
+                const taqaNeutralGray = '#546E7A';
+                
+                new Chart(chartContext, {
+                    type: 'line',
+                    data: {
+                        labels: rows.map(r => r.t),          // x-axis
+                        datasets: [
+                            { 
+                                label: 'DQ alerts',
+                                data: rows.map(r => r.dq),
+                                borderColor: taqaTeal,
+                                backgroundColor: 'rgba(0, 166, 166, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                pointBackgroundColor: taqaTeal,
+                                pointBorderColor: taqaTeal,
+                                pointBorderWidth: 1,
+                                pointRadius: 3,
+                                fill: false
+                            },
+                            { 
+                                label: 'ML alerts',
+                                data: rows.map(r => r.ml),
+                                borderColor: taqaOrange,
+                                backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                pointBackgroundColor: taqaOrange,
+                                pointBorderColor: taqaOrange,
+                                pointBorderWidth: 1,
+                                pointRadius: 3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { 
+                            mode: 'index', 
+                            intersect: false 
+                        },
+                        plugins: { 
+                            legend: { 
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        family: 'Arial',
+                                        size: 12
+                                    },
+                                    color: taqaNeutralGray,
+                                    usePointStyle: false,
+                                    boxWidth: 15,
+                                    boxHeight: 15
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 166, 166, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: taqaTeal,
+                                borderWidth: 1
+                            }
+                        },
+                        scales: { 
+                            x: {
+                                ticks: {
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(84, 110, 122, 0.1)'
+                                }
+                            },
+                            y: { 
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Alerts',
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial',
+                                        size: 14
+                                    }
+                                },
+                                ticks: {
+                                    color: taqaNeutralGray,
+                                    font: {
+                                        family: 'Arial'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(84, 110, 122, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                chartsLoaded.timeline = true;
+                updateChartStatus('timeline', 'success', 'Loaded');
+                console.log('TAQA-branded timeline chart initialized successfully');
+            } else {
+                chartsLoaded.timeline = true;
+                updateChartStatus('timeline', 'success', 'No data');
+                console.log('Timeline chart: No data available');
+            }
+        }
+        
+        function initializeHealthStrip() {
+            try {
+                const batch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BatchState ?? new { }));
+
+                // ---------- batch health strip with full labels --------------------
+                const tags = Object.keys(batch);
+
+                const strip = document.getElementById('healthStrip');
+                if (!strip) {
+                    console.warn('Health strip element not found');
+                    return;
+                }
+                
+                strip.classList.add('flex-wrap');   // allow wrapping to next line
+
+                tags.forEach(t => {
+
+                    // wrapper column
+                    const col = document.createElement('div');
+                    col.className = 'd-flex flex-column align-items-center me-2 mb-2 small';
+
+                    // coloured square
+                    const box = document.createElement('div');
+                    box.className = 'dq-tile';
+                    const state = batch[t];                 // 0 / 1 / 2
+                    box.style.background = state === 2 ? '#dc3545'      // red ≥10 %
+                                      : state === 1 ? '#ffc107'         // yellow 1-10 %
+                                                    : '#198754';        // green  <1 %
+                    col.appendChild(box);
+
+                    // full tag name
+                    const lbl = document.createElement('div');
+                    lbl.textContent = t;          // e.g. "Choke-Position"
+                    lbl.style.maxWidth = '110px';
+                    lbl.className      = 'text-center text-muted mt-1';
+                    col.appendChild(lbl);
+
+                    strip.appendChild(col);
+                });
+                
+                console.log('Health strip initialized successfully');
+            } catch (error) {
+                console.error('Error initializing health strip:', error);
+            }
+        }
+
+        function generatePDFReport() {
+            const btn = document.getElementById('generateReportBtn');
+            const btnText = document.getElementById('reportBtnText');
+            const btnSpinner = document.getElementById('reportBtnSpinner');
+            
+            // Show loading state
+            btn.disabled = true;
+            btnText.textContent = 'Generating Report...';
+            btnSpinner.classList.remove('d-none');
+            
+            // Wait a moment to ensure charts are fully rendered
+            setTimeout(() => {
+                try {
+                    // Capture chart images with validation
+                    const severityChartCanvas = document.getElementById('severityChart');
+                    const timelineChartCanvas = document.getElementById('anomalyChart');
+                    
+                    let severityChartImage = '';
+                    let timelineChartImage = '';
+                    
+                    // Capture severity chart with error handling
+                    try {
+                        if (severityChartCanvas && severityChartCanvas.width > 0 && severityChartCanvas.height > 0) {
+                            severityChartImage = severityChartCanvas.toDataURL('image/png', 0.8); // Reduced quality
+                            console.log('Severity chart captured, size:', severityChartImage.length);
+                        } else {
+                            console.warn('Severity chart canvas is invalid or has zero dimensions');
+                        }
+                    } catch (e) {
+                        console.warn('Failed to capture severity chart:', e);
+                    }
+                    
+                    // Capture timeline chart with error handling
+                    try {
+                        if (timelineChartCanvas && timelineChartCanvas.width > 0 && timelineChartCanvas.height > 0) {
+                            timelineChartImage = timelineChartCanvas.toDataURL('image/png', 0.8); // Reduced quality
+                            console.log('Timeline chart captured, size:', timelineChartImage.length);
+                        } else {
+                            console.warn('Timeline chart canvas is invalid or has zero dimensions');
+                        }
+                    } catch (e) {
+                        console.warn('Failed to capture timeline chart:', e);
+                    }
+                    
+                    // Get first 10 rows of table data for the report
+                    const tableRows = [];
+                    const tableElement = document.getElementById('anomalyTable');
+                    
+                    if (tableElement) {
+                        const tbody = tableElement.querySelector('tbody');
+                        if (tbody) {
+                            const rows = tbody.querySelectorAll('tr');
+                            
+
+                            for (let i = 0; i < Math.min(10, rows.length); i++) {
+                                const row = rows[i];
+                                const cells = row.querySelectorAll('td');
+                                
+                                if (cells.length >= 9) {
+                                    const rowData = {
+                                        number: cells[0].textContent.trim(),
+                                        timestamp: cells[1].textContent.trim(),
+                                        detector: cells[2].textContent.trim(),
+                                        rawValue: cells[3].textContent.trim(),
+                                        score: cells[4].textContent.trim(),
+                                        threshold: cells[5].textContent.trim(),
+                                        severity: cells[6].textContent.trim(),
+                                        observed: cells[7].textContent.trim(),
+                                        predicted: cells[8].textContent.trim()
+                                    };
+                                    tableRows.push(rowData);
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log('Table data captured:', tableRows.length, 'rows');
+                    
+                    // Prepare report data
+                    const reportData = {
+                        severityChart: severityChartImage,
+                        timelineChart: timelineChartImage,
+                        tableData: tableRows,
+                        totalAnomalies: @total,
+                        summaryData: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Summary ?? new { })),
+                        batchState: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.BatchState ?? new { })),
+                        generatedAt: new Date().toLocaleString(),
+                        // Pass deployment metrics to PDF
+                        inferenceLatencyMs: @ViewBag.InferenceLatencyMs ?? null,
+                        throughput: @ViewBag.Throughput ?? null,
+                        memoryUsedMb: @ViewBag.MemoryUsedMb ?? null,
+                        cpuUsedMs: @ViewBag.CpuUsedMs ?? null
+                    };
+                    
+                    console.log('Sending report data to server...');
+                    
+                    // Send data to server for PDF generation
+                    fetch('/Anomaly/GenerateReport', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(reportData)
+                    })
+                    .then(async response => {
+                        console.log('Server response status:', response.status);
+                        
+                        if (response.ok) {
+                            return response.blob();
+                        }
+                        
+                        // Try to get error details from response
+                        let errorMessage = 'Failed to generate report';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.details || errorData.error || errorMessage;
+                            console.error('Server error details:', errorData);
+                        } catch (e) {
+                            // If response is not JSON, use status text
+                            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                        }
+                        
+                        throw new Error(errorMessage);
+                    })
+                    .then(blob => {
+                        console.log('PDF blob received, size:', blob.size);
+                        
+                        // Create download link
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Anomaly_Detection_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        console.log('PDF download initiated');
+                        
+                        // Reset button state
+                        btn.disabled = false;
+                        btnText.textContent = 'Generate PDF Report';
+                        btnSpinner.classList.add('d-none');
+                    })
+                    .catch(error => {
+                        console.error('Error generating report:', error);
+                        alert(`Failed to generate report: ${error.message}`);
+                        
+                        // Reset button state
+                        btn.disabled = false;
+                        btnText.textContent = 'Generate PDF Report';
+                        btnSpinner.classList.add('d-none');
+                    });
+                    
+                } catch (error) {
+                    console.error('Error in generatePDFReport:', error);
+                    alert(`Error preparing report data: ${error.message}`);
+                    
+                    // Reset button state
+                    btn.disabled = false;
+                    btnText.textContent = 'Generate PDF Report';
+                    btnSpinner.classList.add('d-none');
+                }
+            }, 500); // Wait 500ms for charts to fully render
+        }
+
+        const PAYLOAD = @Html.Raw(ViewBag.Drill ?? "{}");
+
+        // keep a single Chart instance
+        let drillChart = null;
+
+        const modal = document.getElementById('drillModal');
+        modal.addEventListener('show.bs.modal', evt => {
+            const det   = evt.relatedTarget.getAttribute('data-det');
+            const rows  = PAYLOAD[det] || [];
+
+            // elements we'll toggle
+            const canvas   = document.getElementById('drillChart');
+            const emptyMsg = document.getElementById('noDataMsg');
+            const csvLink  = document.getElementById('csvLink');
+
+            // ─── case 1: NO rows ─────────────────────────────
+            if (!rows.length) {
+                // hide chart, show message
+                canvas.classList.add('d-none');
+                emptyMsg.classList.remove('d-none');
+                csvLink.classList.add('d-none');
+
+                // clean up any old chart instance
+                if (drillChart) { drillChart.destroy(); drillChart = null; }
+                return;
+            }
+
+            // ─── case 2: we DO have data ─────────────────────
+            canvas.classList.remove('d-none');
+            emptyMsg.classList.add('d-none');
+            csvLink.classList.remove('d-none');
+
+            // update modal title
+            document.getElementById('drillTitle').textContent =
+                det.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+
+            // build datasets …
+            const ts   = rows.map(r=>r.t);
+            const obs  = rows.map(r=>r.obs ?? r.raw);
+            const pred = rows.map(r=>r.pred);
+            const cut  = rows.map(r=>r.thr);
+
+            // (re)create chart
+            const ctx = canvas.getContext('2d');
+            if (drillChart) drillChart.destroy();
+            drillChart = new Chart(ctx,{
+                type:'line',
+                data:{
+                  labels: ts,
+                  datasets:[
+                    {label:'Observed', data:obs, borderWidth:1, pointRadius:0},
+                    ...(pred[0] !== null ? [{label:'Predicted', data:pred, borderWidth:1,
+                                             borderDash:[4,4], pointRadius:0}] : []),
+                    ...(cut[0]  > 0     ? [{label:'Threshold', data:cut, borderWidth:1,
+                                             borderDash:[2,6], pointRadius:0}] : [])
+                  ]
+                },
+                options:{
+                  responsive:true,
+                  interaction:{mode:'index',intersect:false},
+                  plugins:{legend:{position:'top'}},
+                  scales:{y:{beginAtZero:false}}
+                }
+            });
+
+            // build CSV link
+            const csv = ["timestamp,observed,predicted,score,threshold"]
+                        .concat(rows.map(r=>[r.t,r.obs??r.raw,r.pred??"",r.score??"",r.thr??""].join(',')))
+                        .join('\n');
+            csvLink.href      = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+            csvLink.download  = det + "_anomalies.csv";
+        });
+    </script>
+
+    <style>
+        .dq-tile {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+        }
+        
+        /* DataTables styling adjustments */
+        .dataTables_wrapper {
+            width: 100%;
+        }
+        
+        .dataTables_filter {
+            float: right;
+            text-align: right;
+        }
+        
+        .dataTables_length {
+            float: left;
+        }
+        
+        .dataTables_info {
+            float: left;
+        }
+        
+        .dataTables_paginate {
+            float: right;
+        }
+        
+        #anomalyTable tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        #anomalyTable tbody tr {
+            cursor: pointer;
+        }
+    </style>
+}
