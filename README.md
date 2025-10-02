@@ -1,13 +1,11 @@
-<p align="center">
-  <img src="TAQA-InferenceAPI/logo.png" alt="drawing" width="200"/>
-</p>
 
-# PulseEight ICV — SIT Anomaly Triage (ONNX/.NET)
+
+# Anomaly Detection System with Automated PDF Report Generation
 
 ![SIT pipeline overview](TAQA_Model_Development/TAQA_pipeline.png)
 *Fig. A. Ingest (DataHub/CSV) → Preprocess → Ensemble → Thresholding → Dashboard/PDF.*
 
-- This repo contains the code and artifacts for a physics-informed, **unsupervised** anomaly detection of **PulseEight Interval Control Valve (ICV)** System Integration Tests (SIT).  
+- This repo contains the code and artifacts for a physics-informed, **unsupervised** anomaly detection of a downhole completion tool.
 - It ingests 1 Hz workshop telemetry, runs a small ensemble (Isolation Forests + XGB residuals), and produces **standardised PDF evidence** from a .NET web app.
 
 ---
@@ -24,14 +22,14 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 
 ## Repo layout
 ```
-	├─ TAQA_Deployment/        # .NET web app (controllers, services, dashboard)
-	├─ TAQA_Model_Development/ # EDA & training notebooks, model dev
-	├─ TAQA-InferenceAPI/      # FastAPI Python service for inference
-	├─ models_4/               # ONNX models (versioned)
-	├─ deliverables/           # Project deliverables
-	├─ logbook/                # Project logbook
-	├─ title/                  # Project title and metadata
-	├─ docs/                   # diagrams, figures, README images
+	├─ Deployment/        # .NET web app (controllers, services, dashboard)
+	├─ Model_Development/ # EDA & training notebooks, model dev
+	├─ InferenceAPI/      # FastAPI Python service for inference
+	├─ models_4/          # ONNX models (versioned)
+	├─ deliverables/      # Project deliverables
+	├─ logbook/           # Project logbook
+	├─ title/             # Project title and metadata
+	├─ docs/              # diagrams, figures, README images
 	└─ README.md
 ```
 
@@ -71,8 +69,6 @@ Engineers currently review long SIT traces by eye. Subtle issues (e.g., repeated
 - Single-company SIT data; labels from one tool; designed for batch/near-real-time triage.  
 - Not a closed-loop controller. Use as **decision support**. To include feedback loop for retraining
 
-## License
-Private to TAQA
 
 ## Contact
 Ashwin V · ashwin.vel24@imperial.ac.uk · [linkedin.com/in/ashwinvel2000](https://linkedin.com/in/ashwinvel2000)
