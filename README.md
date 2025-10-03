@@ -2,7 +2,7 @@
 
 # Anomaly Detection System with Automated PDF Report Generation
 
-![SIT pipeline overview](Model_Development/ML_pipeline.png)
+![SIT pipeline overview](Model_Development/ML2_pipeline.png)
 *Fig. A. Ingest (DataHub/CSV) → Preprocess → Ensemble → Thresholding → Dashboard/PDF.*
 
 - This repo contains the code and artifacts for a physics-informed, **unsupervised** anomaly detection of a downhole completion tool.
